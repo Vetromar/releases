@@ -4,7 +4,13 @@ Official release artifacts for the [Vetromar](https://vetromar.com) desktop app.
 
 **[Download the latest version for Mac (Apple Silicon)](https://github.com/Vetromar/releases/releases/latest/download/Vetromar.dmg)**
 
-After downloading: drag Vetromar to your Applications folder; on first launch, right-click the app and choose Open. The app keeps itself up to date automatically.
+After downloading: drag Vetromar to your Applications folder, then run this in Terminal once (this build is not yet notarized with Apple):
+
+```
+xattr -cr /Applications/Vetromar.app
+```
+
+The app keeps itself up to date automatically after that.
 
 ---
 
