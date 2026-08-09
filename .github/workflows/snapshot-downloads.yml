@@ -1,0 +1,39 @@
+name: Snapshot download counts
+
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Append today's cumulative counts to stats/downloads.csv
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          today=$(date -u +%F)
+          counts=$(gh api "repos/${GITHUB_REPOSITORY}/releases" --paginate \
+            --jq '[.[].assets[]] |
+                  {dmg: (map(select(.name | endswith(".dmg")) | .download_count) | add // 0),
+                   updater: (map(select(.name == "Vetromar.app.tar.gz") | .download_count) | add // 0)} |
+                  "\(.dmg),\(.updater)"')
+          mkdir -p stats
+          [ -f stats/downloads.csv ] || echo "date,dmg_downloads,updater_downloads" > stats/downloads.csv
+          if grep -q "^${today}," stats/downloads.csv; then
+            echo "Row for ${today} already present; nothing to do."
+            exit 0
+          fi
+          echo "${today},${counts}" >> stats/downloads.csv
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add stats/downloads.csv
+          git commit -m "stats: ${today} downloads snapshot (${counts})"
+          git push
